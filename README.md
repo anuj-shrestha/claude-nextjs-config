@@ -25,16 +25,41 @@ Every file is human-readable and easy to edit. Keep what helps, delete what does
 Don't want to copy files you might not need? Open your project in **Claude Code** and paste this prompt. Claude will read your repo, fetch the overlay's files from GitHub, and tell you which pieces fit your stack — then apply only what you approve.
 
 ```
-Audit this project to decide which parts of the claude-nextjs-config overlay
-fit. First, read my package.json, tsconfig.json, the contents of src/ or app/,
-and any existing CLAUDE.md / .claude/ / .mcp.json files. Then fetch the
-overlay's files from https://github.com/anuj-shrestha/claude-nextjs-config
-(use raw.githubusercontent.com for individual files).
+Help me install the claude-nextjs-config overlay
+(https://github.com/anuj-shrestha/claude-nextjs-config) in this directory.
+The flow depends on whether I have an existing Next.js project here.
+
+STEP 1 — Detect the directory state. Run `ls -la` and decide:
+
+- "EMPTY OR NEARLY EMPTY" — no package.json, or only README/LICENSE/.git
+  present. Treat as a fresh start.
+- "EXISTING PROJECT" — package.json present (any framework).
+
+STEP 2A — If EMPTY: ask me one short question — "What are you building? (1
+sentence is fine.)" — then offer two paths and let me pick:
+
+  (i) Scaffold a Next.js 16 + TS app here with
+      `pnpm create next-app@latest . --ts --tailwind --eslint --app --src-dir
+      --import-alias "@/*" --use-pnpm --turbopack --yes`, then apply the
+      overlay on top.
+  (ii) Clone https://github.com/anuj-shrestha/claude-nextjs-starter instead
+      — richer template with demo pages and tooling preconfigured. (Point
+      me to that repo's smart-install prompt.)
+
+After I pick (i), execute it: scaffold, apply the overlay
+piece-by-piece (skip pieces that obviously don't fit my one-sentence
+description), then run `pnpm typecheck && pnpm build` to verify.
+
+STEP 2B — If EXISTING PROJECT: read package.json, tsconfig.json, the
+contents of src/ or app/, and any existing CLAUDE.md / .claude/ /
+.mcp.json files. Then fetch the overlay's files from
+https://github.com/anuj-shrestha/claude-nextjs-config (raw.githubusercontent.com).
 
 For each piece — CLAUDE.md, each of the 5 agents in .claude/agents/, each of
 the 5 commands in .claude/commands/, each of the 3 hooks in .claude/hooks/,
-.claude/settings.json, and each of the 4 MCP servers in .mcp.json — give me
-one of:
+.claude/settings.json, each of the 4 MCP servers in .mcp.json, AND ccusage
+statusline (an optional per-user companion — see the "Tips & companions"
+section of the overlay README) — give me one of:
 
 - "Apply as-is" — fits this project unchanged.
 - "Apply with tweak: <what>" — fits but needs an adjustment (different
@@ -43,19 +68,21 @@ one of:
 
 Factor in: framework version, package manager, App vs Pages Router, testing
 stack, what existing CLAUDE.md/agents would conflict, and what the codebase
-shows I'm actually working on.
+shows I'm actually working on. If I already have a `statusLine` configured,
+default to "Skip" for ccusage; otherwise propose adding it to
+~/.claude/settings.json (per-user, not this project's settings.json).
 
 Output a single recommendation table. Don't copy or modify any files yet.
 After I confirm the table, apply only the rows I approve, adapting tweaks
-where I specified them.
+where I specified them. Finish with a `pnpm typecheck` if applicable.
 ```
 
 **What Claude will do:**
 
-1. Read enough of your project to understand the stack.
-2. Fetch the overlay's files from GitHub.
-3. Show you a per-piece table: apply / tweak / skip, with reasons.
-4. Wait for your go-ahead, then copy only what you confirmed.
+1. Look at your directory and pick the empty-start vs. existing-project branch.
+2. For empty starts: ask one question, scaffold or redirect to the starter, then install.
+3. For existing projects: read your stack, fetch the overlay from GitHub, show a per-piece table (apply / tweak / skip), wait for confirmation, then copy only what you approved.
+4. Optionally propose `ccusage` for per-turn token visibility.
 
 If you'd rather just grab everything, the one-liner below is faster.
 
@@ -200,6 +227,27 @@ Everything in `.claude/` is yours to edit. Common adjustments:
 - **Want your own agent?** Drop a new markdown file in `.claude/agents/` — Claude Code picks it up automatically.
 
 For machine-local overrides (paths, secrets, personal preferences), use `.claude/settings.local.json` — it's gitignored.
+
+---
+
+## Tips & companions
+
+### See your token spend per session
+
+Claude Code's `/cost` gives session totals. For richer per-turn visibility — burn rate, current 5-hour block, context %, today's cost — add this to **your** `~/.claude/settings.json` (per-user, not part of this overlay):
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccusage statusline"
+  }
+}
+```
+
+[`ccusage`](https://github.com/ryoppippi/ccusage) is MIT, local-only (no telemetry), and reads `~/.claude/projects/*.jsonl` to compute usage. Requires Node ≥20 or Bun ≥1.2. For faster refresh, swap `npx -y` for `bunx`.
+
+> Why per-user, not in the overlay's `settings.json`? Statusline is a personal preference, not a project convention — and `npx -y` spawn on every refresh would tax everyone who installs the overlay. Opt in if you want it.
 
 ---
 
