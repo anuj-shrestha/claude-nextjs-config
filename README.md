@@ -10,9 +10,10 @@
 
 | File | What it does |
 |---|---|
-| `CLAUDE.md` | Project conventions Claude follows: file layout, imports, testing, a11y floor, security rules |
-| `.claude/agents/` | Five specialized subagents — `code-reviewer`, `test-writer`, `a11y-auditor`, `next-debugger`, `refactorer` |
-| `.claude/commands/` | Five slash commands — `/new-component`, `/new-route`, `/write-test`, `/review`, `/a11y` |
+| `CLAUDE.md` | Project conventions Claude follows: file layout, imports, testing, **design discipline**, a11y floor, security rules |
+| `.claude/agents/` | Six specialized subagents — `code-reviewer`, `test-writer`, `a11y-auditor`, `designer`, `next-debugger`, `refactorer` |
+| `.claude/commands/` | Six slash commands — `/new-component`, `/new-route`, `/write-test`, `/review`, `/a11y`, `/design-review` |
+| `.claude/skills/` | One auto-invoked skill — `design-discipline` (activates on UI/component/style work) |
 | `.claude/settings.json` | Hooks that auto-format on save, block `.env*` writes, and nudge you to typecheck before commit |
 | `.mcp.json` | Pre-wired MCP servers — `next-devtools`, `playwright`, `shadcn-ui`, `context7` |
 
@@ -55,11 +56,10 @@ contents of src/ or app/, and any existing CLAUDE.md / .claude/ /
 .mcp.json files. Then fetch the overlay's files from
 https://github.com/anuj-shrestha/claude-nextjs-config (raw.githubusercontent.com).
 
-For each piece — CLAUDE.md, each of the 5 agents in .claude/agents/, each of
-the 5 commands in .claude/commands/, each of the 3 hooks in .claude/hooks/,
-.claude/settings.json, each of the 4 MCP servers in .mcp.json, AND ccusage
-statusline (an optional per-user companion — see the "Tips & companions"
-section of the overlay README) — give me one of:
+For each piece — CLAUDE.md, each of the 6 agents in .claude/agents/, each of
+the 6 commands in .claude/commands/, the `design-discipline` skill in
+.claude/skills/, each of the 3 hooks in .claude/hooks/, .claude/settings.json,
+and each of the 4 MCP servers in .mcp.json — give me one of:
 
 - "Apply as-is" — fits this project unchanged.
 - "Apply with tweak: <what>" — fits but needs an adjustment (different
@@ -68,13 +68,38 @@ section of the overlay README) — give me one of:
 
 Factor in: framework version, package manager, App vs Pages Router, testing
 stack, what existing CLAUDE.md/agents would conflict, and what the codebase
-shows I'm actually working on. If I already have a `statusLine` configured,
-default to "Skip" for ccusage; otherwise propose adding it to
-~/.claude/settings.json (per-user, not this project's settings.json).
+shows I'm actually working on.
 
 Output a single recommendation table. Don't copy or modify any files yet.
 After I confirm the table, apply only the rows I approve, adapting tweaks
 where I specified them. Finish with a `pnpm typecheck` if applicable.
+
+STEP 3 — ALWAYS run this step, regardless of which branch above ran. Do
+not skip it. Per-turn token visibility setup:
+
+  1. Read ~/.claude/settings.json (create the file as `{}` if missing —
+     do not touch any existing keys).
+  2. If a `statusLine` block already exists there, print it to me and ask
+     whether I want to swap it for the ccusage version below. Stop and
+     wait for my answer.
+  3. If no `statusLine` exists, tell me about ccusage in two sentences
+     (MIT, local-only, no telemetry; reads ~/.claude/projects/*.jsonl to
+     show per-turn cost, burn rate, and context %) and propose adding
+     exactly this block to ~/.claude/settings.json (merging — never
+     overwriting other keys):
+
+         "statusLine": {
+           "type": "command",
+           "command": "npx -y ccusage statusline"
+         }
+
+  4. Wait for my yes/no. On yes, edit ~/.claude/settings.json (preserve
+     all other keys with strict JSON formatting). On no, do nothing.
+  5. Mention that swapping `npx -y` for `bunx` is faster if I have Bun
+     installed.
+
+This step is the only way I'll find out ccusage exists. Don't let it slip
+because the install above felt complete — I want the explicit offer.
 ```
 
 **What Claude will do:**
@@ -82,7 +107,7 @@ where I specified them. Finish with a `pnpm typecheck` if applicable.
 1. Look at your directory and pick the empty-start vs. existing-project branch.
 2. For empty starts: ask one question, scaffold or redirect to the starter, then install.
 3. For existing projects: read your stack, fetch the overlay from GitHub, show a per-piece table (apply / tweak / skip), wait for confirmation, then copy only what you approved.
-4. Optionally propose `ccusage` for per-turn token visibility.
+4. **Always** propose `ccusage` for per-turn token visibility before declaring done.
 
 If you'd rather just grab everything, the one-liner below is faster.
 
@@ -95,8 +120,9 @@ npx degit anuj-shrestha/claude-nextjs-config .
 
 Open the repo in Claude Code. You should immediately see:
 
-- Five subagents listed when you run `/agents`
-- Five slash commands when you type `/`
+- Six subagents listed when you run `/agents`
+- Six slash commands when you type `/`
+- `design-discipline` skill listed under `/skills`
 - Auto-format firing the next time you edit a `.tsx` file
 - `.env.local` writes blocked with a hint
 - MCP servers connecting on startup (`/mcp`)
@@ -162,6 +188,7 @@ Edit the **Project Context** section at the top to describe your app. Leave the 
 | `code-reviewer` | "Review my recent changes." Read-only, runs git diff under the hood. | Read, Grep, Glob, Bash (git only) |
 | `test-writer` | "Write tests for this file." Generates Vitest unit + Playwright E2E. | Read, Edit, Write, Bash |
 | `a11y-auditor` | "Audit this component for accessibility." WCAG 2.1 AA pass. | Read, Grep, Glob |
+| `designer` | "Review the design." Spacing, typography, color, composition, polish. | Read, Grep, Glob |
 | `next-debugger` | "Why is this route 500ing?" Inspects via `next-devtools-mcp`. | Read, MCP tools |
 | `refactorer` | Small, single-concern refactors. Refuses scope creep. | Read, Edit, Grep |
 
@@ -176,6 +203,15 @@ Claude Code routes to these automatically based on the prompt — you usually wo
 | `/write-test [file]` | Hands off to `test-writer` for the current or specified file. |
 | `/review [scope]` | Hands off to `code-reviewer` for the recent diff or a specific scope. |
 | `/a11y [file]` | Hands off to `a11y-auditor` for a component or page. |
+| `/design-review [file]` | Hands off to `designer` for a visual-quality review of a component or page. |
+
+### Skills
+
+One skill ships in `.claude/skills/` and auto-activates by keyword:
+
+- **`design-discipline`** — triggers on design / UI / component / Tailwind / style work. Surfaces the project's design rules (spacing scale, type hierarchy, color system, motion, composition) so generated UI converges on the project's standards instead of generic Claude defaults. Complements the `designer` agent: the skill nudges generation; the agent audits the result.
+
+Why this skill is bundled (and others aren't): it pairs 1:1 with the project's `CLAUDE.md` Design Discipline section and is written in-house. Third-party community skills are listed under [Recommended community skills](#recommended-community-skills) — install those globally or per-project as you see fit.
 
 ### Hooks
 
@@ -268,7 +304,7 @@ If you're on an older Next.js version, most of this still works — but `/new-ro
 
 ## Recommended community skills
 
-This overlay deliberately does **not** bundle skills. Skills work better when you choose them yourself, and most good ones are personal workflow (better installed globally) rather than project-specific. A few we like:
+This overlay ships **one in-house skill** (`design-discipline` — see [Skills](#skills) above). Everything else is referenced, not vendored. Skills work better when you choose them deliberately, and most good ones are personal workflow (better installed globally) rather than project-specific. A few we like:
 
 ### Install globally — they should follow you across every project
 

@@ -67,6 +67,48 @@ If your stack differs, edit this section *and* the relevant files in `.claude/ag
 
 Use `/write-test` to delegate test authoring to the `test-writer` subagent.
 
+## Design Discipline
+
+Visual decisions follow the same engineering values as the rest of the codebase: consistency over novelty, restraint over showcase. Break the defaults below only with a code comment explaining why. Run `/design-review` on new components or pages to catch drift before merge.
+
+**Spacing and layout:**
+- Tailwind's spacing scale only — no `p-[17px]` or `mt-[42px]`. If you reach for an arbitrary value, the scale is wrong; widen it deliberately. <!-- why: arbitrary values fork the design system one component at a time -->
+- One vertical rhythm per page (e.g., `space-y-12` between top-level sections, `space-y-3` within). Pick once, stick to it.
+- Mobile-first. Design the 360px layout first; layer `sm:` / `md:` / `lg:` on top. Never the reverse.
+
+**Typography:**
+- Hierarchy through **size + weight**, not color. A muted heading is almost always wrong.
+- One type scale per app (Tailwind's defaults). One UI font, optionally one display font. Never three.
+- `text-balance` on multi-word headings; `text-pretty` on body prose. `leading-tight` for display, `leading-relaxed` for prose.
+
+**Color:**
+- One neutral scale (pick zinc OR slate OR neutral) + one accent. **No third color.** Use the accent for *the* primary action on a screen, not for every emphasized thing.
+- Light and dark share semantic tokens (`bg-background`, `text-foreground`, `border`). Don't scatter `dark:` on every utility — define tokens once.
+- Hex literals reserved for brand colors with no scale equivalent.
+- State never conveyed by color alone (also in Accessibility).
+
+**Borders, radii, shadows:**
+- One radius per app (`rounded-md` or `rounded-lg`). Don't mix `rounded-sm` cards with `rounded-2xl` buttons unless the contrast is intentional and consistent.
+- Prefer borders over shadows for depth. Shadows are heavy and date fast. When you need one, `shadow-sm` is usually enough.
+- One border color from the neutral scale (e.g., `border-zinc-200` / `dark:border-zinc-800`). Not a new color per component.
+
+**Motion:**
+- Motion conveys meaning — state change, focus shift, success/error feedback. Decorative motion is noise.
+- Hover/focus: ~150ms. Entrance/exit: 200–300ms. Anything >500ms reads as sluggish.
+- Always honor `prefers-reduced-motion: reduce` (use `motion-safe:` / `motion-reduce:` Tailwind variants).
+
+**Composition:**
+- Reach for native HTML before shadcn. A `<button className="...">` is often better than a custom `<Button>` for one-offs.
+- Don't over-componentize. One-line JSX with no logic doesn't deserve its own file.
+- One concern per component. Split data fetching + complex rendering + state into separate files.
+- Prefer composition (children, slots) over prop proliferation. `variant="primary-large-with-icon"` is a smell.
+
+**Polish that compounds:**
+- Form inputs match button height (keeps the line-of-action consistent).
+- Empty states say what to do *next*, not just "no data."
+- Error states say how to *recover*, not just what failed.
+- Loading states match the shape of the final content (skeleton ≫ spinner when feasible).
+
 ## Accessibility — Floor, Not Ceiling
 
 Every component and page must meet **WCAG 2.1 AA**. Non-negotiable defaults:
@@ -114,6 +156,7 @@ The `Stop` hook (see `.claude/settings.json`) will remind you. A red typecheck m
 | `code-reviewer` | "Review my changes." Read-only. |
 | `test-writer` | "Write tests for X." Generates Vitest + Playwright. |
 | `a11y-auditor` | "Check accessibility." WCAG 2.1 AA pass. |
+| `designer` | "Review the design." Spacing, typography, color, composition, polish. |
 | `next-debugger` | Runtime errors, route issues, state inspection. Uses `next-devtools-mcp`. |
 | `refactorer` | Small, single-concern refactors. Refuses scope creep. |
 
@@ -126,5 +169,8 @@ The `Stop` hook (see `.claude/settings.json`) will remind you. A red typecheck m
 | `/write-test [file]` | Delegate to `test-writer`. |
 | `/review [scope]` | Delegate to `code-reviewer`. |
 | `/a11y [file]` | Delegate to `a11y-auditor`. |
+| `/design-review [file]` | Delegate to `designer`. |
+
+**Skills** (auto-invoked by keywords): `design-discipline` activates on design/UI/component/style-related work.
 
 **MCP servers** wired in `.mcp.json`: `next-devtools`, `playwright`, `shadcn-ui`, `context7`.
