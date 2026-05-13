@@ -26,96 +26,20 @@ Every file is human-readable and easy to edit. Keep what helps, delete what does
 Don't want to copy files you might not need? Open your project in **Claude Code** and paste this prompt. Claude will read your repo, fetch the overlay's files from GitHub, and tell you which pieces fit your stack — then apply only what you approve.
 
 ```
-Help me install the claude-nextjs-config overlay
-(https://github.com/anuj-shrestha/claude-nextjs-config) in this directory.
-The flow has three steps. Do them in order. Do not skip STEP 1.
-
-STEP 1 — Pre-flight: turn on per-turn token visibility BEFORE we install
-anything. This way I can see exactly what this install costs in the
-statusline as you work.
-
-  1. Read ~/.claude/settings.json (create the file as `{}` if missing —
-     do not touch any existing keys).
-  2. Check for `"_ccusageDeclined": true` at the top level. If present,
-     skip the rest of STEP 1 silently and go to STEP 2 — I've already
-     opted out in a prior session.
-  3. If a `statusLine` block already exists, print it to me and ask whether
-     I want to swap it for the ccusage version below. Wait for my answer.
-  4. If no `statusLine` exists, tell me about ccusage in two sentences
-     (MIT, local-only, no telemetry; reads ~/.claude/projects/*.jsonl to
-     show per-turn cost, burn rate, and context %) and propose adding
-     exactly this block to ~/.claude/settings.json (merging — never
-     overwriting other keys):
-
-         "statusLine": {
-           "type": "command",
-           "command": "npx -y ccusage statusline"
-         }
-
-  5. Wait for my yes/no.
-     - On YES: edit ~/.claude/settings.json to add the `statusLine` block
-       (preserve all other keys with strict JSON formatting). Tell me to
-       refresh Claude Code's statusline once.
-     - On NO: edit ~/.claude/settings.json to add `"_ccusageDeclined": true`
-       so this step skips silently in future installs. Proceed without
-       ccusage.
-  6. Mention that swapping `npx -y` for `bunx` is faster if I have Bun.
-
-This step is the only way I'll find out ccusage exists. Do not skip it
-because the install feels like the real work — for me, seeing the cost
-land in real time IS the install.
-
-STEP 2 — Detect the directory state. Run `ls -la` and decide:
-
-- "EMPTY OR NEARLY EMPTY" — no package.json, or only README/LICENSE/.git
-  present. Treat as a fresh start.
-- "EXISTING PROJECT" — package.json present (any framework).
-
-STEP 3A — If EMPTY: ask me one short question — "What are you building? (1
-sentence is fine.)" — then offer two paths and let me pick:
-
-  (i) Scaffold a Next.js 16 + TS app here with
-      `pnpm create next-app@latest . --ts --tailwind --eslint --app --src-dir
-      --import-alias "@/*" --use-pnpm --turbopack --yes`, then apply the
-      overlay on top.
-  (ii) Clone https://github.com/anuj-shrestha/claude-nextjs-starter instead
-      — richer template with demo pages and tooling preconfigured. (Point
-      me to that repo's smart-install prompt.)
-
-After I pick (i), execute it: scaffold, apply the overlay
-piece-by-piece (skip pieces that obviously don't fit my one-sentence
-description), then run `pnpm typecheck && pnpm build` to verify.
-
-STEP 3B — If EXISTING PROJECT: read package.json, tsconfig.json, the
-contents of src/ or app/, and any existing CLAUDE.md / .claude/ /
-.mcp.json files. Then fetch the overlay's files from
-https://github.com/anuj-shrestha/claude-nextjs-config (raw.githubusercontent.com).
-
-For each piece — CLAUDE.md, each of the 6 agents in .claude/agents/, each of
-the 6 commands in .claude/commands/, the `design-discipline` skill in
-.claude/skills/, each of the 3 hooks in .claude/hooks/, .claude/settings.json,
-and each of the 4 MCP servers in .mcp.json — give me one of:
-
-- "Apply as-is" — fits this project unchanged.
-- "Apply with tweak: <what>" — fits but needs an adjustment (different
-  package manager, missing Playwright, alternate path alias, no shadcn, etc.).
-- "Skip: <why>" — doesn't fit this project.
-
-Factor in: framework version, package manager, App vs Pages Router, testing
-stack, what existing CLAUDE.md/agents would conflict, and what the codebase
-shows I'm actually working on.
-
-Output a single recommendation table. Don't copy or modify any files yet.
-After I confirm the table, apply only the rows I approve, adapting tweaks
-where I specified them. Finish with a `pnpm typecheck` if applicable.
+Fetch https://raw.githubusercontent.com/anuj-shrestha/claude-nextjs-config/main/INSTALL.md
+and follow the steps in it for my current directory. Do them in order,
+do not skip STEP 1, and wait for my confirmation before applying any
+changes.
 ```
 
 **What Claude will do:**
 
-1. **Pre-flight:** propose ccusage statusline for per-turn token visibility so you can watch the install's cost land in real time.
-2. Look at your directory and pick the empty-start vs. existing-project branch.
-3. For empty starts: ask one question, scaffold or redirect to the starter, then install.
-4. For existing projects: read your stack, fetch the overlay from GitHub, show a per-piece table (apply / tweak / skip), wait for confirmation, then copy only what you approved.
+1. **STEP 1 — Pre-flight:** propose `ccusage` for per-turn token visibility so you can watch the install's cost land in real time. (Skipped silently if you previously declined.)
+2. **STEP 2 — Detect directory state** (empty vs. existing project).
+3. **STEP 3A — Empty:** ask one question, scaffold a Next.js app *or* redirect you to the starter.
+4. **STEP 3B — Existing:** read your stack, fetch overlay pieces from GitHub, show a per-piece **apply / tweak / skip** table grouped by category, wait for confirmation, then copy only what you approved.
+
+The full install logic lives in [`INSTALL.md`](INSTALL.md). Edit it there if the defaults don't fit your install path.
 
 If you'd rather just grab everything, the one-liner below is faster.
 
