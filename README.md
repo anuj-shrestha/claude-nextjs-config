@@ -20,6 +20,45 @@ Every file is human-readable and easy to edit. Keep what helps, delete what does
 
 ---
 
+## Smart install (recommended)
+
+Don't want to copy files you might not need? Open your project in **Claude Code** and paste this prompt. Claude will read your repo, fetch the overlay's files from GitHub, and tell you which pieces fit your stack — then apply only what you approve.
+
+```
+Audit this project to decide which parts of the claude-nextjs-config overlay
+fit. First, read my package.json, tsconfig.json, the contents of src/ or app/,
+and any existing CLAUDE.md / .claude/ / .mcp.json files. Then fetch the
+overlay's files from https://github.com/anuj-shrestha/claude-nextjs-config
+(use raw.githubusercontent.com for individual files).
+
+For each piece — CLAUDE.md, each of the 5 agents in .claude/agents/, each of
+the 5 commands in .claude/commands/, each of the 3 hooks in .claude/hooks/,
+.claude/settings.json, and each of the 4 MCP servers in .mcp.json — give me
+one of:
+
+- "Apply as-is" — fits this project unchanged.
+- "Apply with tweak: <what>" — fits but needs an adjustment (different
+  package manager, missing Playwright, alternate path alias, no shadcn, etc.).
+- "Skip: <why>" — doesn't fit this project.
+
+Factor in: framework version, package manager, App vs Pages Router, testing
+stack, what existing CLAUDE.md/agents would conflict, and what the codebase
+shows I'm actually working on.
+
+Output a single recommendation table. Don't copy or modify any files yet.
+After I confirm the table, apply only the rows I approve, adapting tweaks
+where I specified them.
+```
+
+**What Claude will do:**
+
+1. Read enough of your project to understand the stack.
+2. Fetch the overlay's files from GitHub.
+3. Show you a per-piece table: apply / tweak / skip, with reasons.
+4. Wait for your go-ahead, then copy only what you confirmed.
+
+If you'd rather just grab everything, the one-liner below is faster.
+
 ## 60-second quickstart
 
 ```bash
